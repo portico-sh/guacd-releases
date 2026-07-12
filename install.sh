@@ -87,8 +87,10 @@ cat <<EOF
 
 Next steps:
 
-  ${BIN_NAME} enroll <ENROLLMENT_CODE>     # redeem a code from the Portico UI
-  ${BIN_NAME} run                          # start the daemon
+  ${BIN_NAME} run --enroll-code <ENROLLMENT_CODE>   # redeem a code (from the Portico UI) and start the daemon
+
+The daemon self-enrolls on first run and caches credentials, so every later
+start is just \`${BIN_NAME} run\`.
 
 By default guacd talks to the hosted service (https://app.portico.sh).
 For a self-hosted server, pass --server https://your-host or set GUACD_SERVER.

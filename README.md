@@ -42,9 +42,11 @@ Generate a single-use enrollment code in the Portico UI (**Daemons** → Generat
 code), then on the host:
 
 ```sh
-guacd enroll <ENROLLMENT_CODE>     # redeem the code, saves credentials
-guacd run                          # start the daemon
+guacd run --enroll-code <ENROLLMENT_CODE>   # redeem the code and start the daemon
 ```
+
+The daemon self-enrolls on first run and caches credentials, so every later
+start is just `guacd run`.
 
 By default `guacd` talks to the hosted service (`https://app.portico.sh`). For a
 self-hosted deployment, pass `--server https://your-host` or set the
