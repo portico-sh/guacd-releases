@@ -18,9 +18,12 @@ $BinName = 'guacd.exe'
 function Info($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 
 # --- Detect platform ---------------------------------------------------------
-$arch = $env:PROCESSOR_ARCHITECTURE
-if ($arch -ne 'AMD64') {
-    throw "Unsupported architecture: $arch (only x86_64/AMD64 is published today)"
+# Check the OS architecture, NOT the PowerShell process arch: a 32-bit
+# PowerShell on 64-bit Windows reports x86 via $env:PROCESSOR_ARCHITECTURE
+# (WOW64), which would wrongly reject a supported machine. x86_64 binaries also
+# run on ARM64 Windows via built-in emulation.
+if (-not [Environment]::Is64BitOperatingSystem) {
+    throw "Unsupported architecture: 32-bit Windows (only x86_64/AMD64 is published today)"
 }
 $platform = 'windows-x86_64'
 
