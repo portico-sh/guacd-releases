@@ -80,8 +80,8 @@ irm https://raw.githubusercontent.com/portico-sh/guacd-releases/main/install-ser
 Config in `%ProgramData%\guacd`; the service is wrapped with
 [WinSW](https://github.com/winsw/winsw) (guacd is a console app). Manage in
 `services.msc` or with `sc {stop,start} guacd`; logs in
-`%ProgramFiles%\guacd\guacd.out.log`.
+`%ProgramFiles%\guacd\guacd-service.out.log`.
 
 Both accept `--server <url>` / `$env:GUACD_SERVER` for self-hosted control
-planes and `--listen <multiaddr>` / `$env:GUACD_LISTEN_ADDRS` to pin a fixed
-listen port. macOS (launchd) is planned.
+planes and `--webrtc-port <port>` / `$env:GUACD_WEBRTC_PORT` to change the
+webrtc-direct UDP port (default 4001). macOS (launchd) is planned.

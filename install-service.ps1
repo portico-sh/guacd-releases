@@ -6,7 +6,7 @@
 #   $env:GUACD_ENROLL_CODE = '<ENROLLMENT_CODE>'
 #   irm https://raw.githubusercontent.com/portico-sh/guacd-releases/main/install-service.ps1 | iex
 #
-# Optional: $env:GUACD_SERVER, $env:GUACD_LISTEN_ADDRS, $env:GUACD_VERSION.
+# Optional: $env:GUACD_SERVER, $env:GUACD_VERSION.
 #
 # Installs guacd.exe to %ProgramFiles%\guacd, enrolls it into %ProgramData%\guacd,
 # and registers a Windows service (runs on boot, restarts on failure) using the
@@ -37,7 +37,6 @@ if (-not $code) {
     throw 'Set $env:GUACD_ENROLL_CODE to your enrollment code (Portico UI: Daemons -> Generate code) before running.'
 }
 $server = $env:GUACD_SERVER
-$listen = $env:GUACD_LISTEN_ADDRS
 
 New-Item -ItemType Directory -Force -Path $InstallDir, $ConfigDir | Out-Null
 
@@ -60,7 +59,6 @@ if ($LASTEXITCODE -ne 0) { throw 'Enrollment failed (code invalid or expired? ge
 # --- 4. Write the WinSW config (must share the wrapper's base name) -----------
 $runArgs = "run --config-dir `"$ConfigDir`""
 if ($server) { $runArgs += " --server `"$server`"" }
-if ($listen) { $runArgs += " --listen `"$listen`"" }
 $xml = @"
 <service>
   <id>guacd</id>

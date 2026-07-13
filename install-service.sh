@@ -2,15 +2,14 @@
 # guacd systemd service installer (Linux).
 #
 #   curl -fsSL https://raw.githubusercontent.com/portico-sh/guacd-releases/main/install-service.sh \
-#     | sudo sh -s -- --enroll-code <ENROLLMENT_CODE> [--server URL] [--listen MULTIADDR]
+#     | sudo sh -s -- --enroll-code <ENROLLMENT_CODE> [--server URL]
 #
 # Installs the guacd binary to /usr/local/bin, creates a dedicated unprivileged
 # `guacd` user, enrolls the daemon into a system config dir, and installs +
 # starts a systemd service that runs it on boot and restarts it on failure.
 # Logs go to journald: `journalctl -u guacd`.
 #
-# Env alternatives to the flags: GUACD_ENROLL_CODE, GUACD_SERVER,
-# GUACD_LISTEN_ADDRS, GUACD_VERSION.
+# Env alternatives to the flags: GUACD_ENROLL_CODE, GUACD_SERVER, GUACD_VERSION.
 set -eu
 
 REPO="portico-sh/guacd-releases"
@@ -27,17 +26,14 @@ err() { printf '\033[1;31merror:\033[0m %s\n' "$1" >&2; exit 1; }
 # --- Args --------------------------------------------------------------------
 CODE="${GUACD_ENROLL_CODE:-}"
 SERVER="${GUACD_SERVER:-}"
-LISTEN="${GUACD_LISTEN_ADDRS:-}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --enroll-code) CODE="${2:-}"; shift 2 ;;
     --enroll-code=*) CODE="${1#*=}"; shift ;;
     --server) SERVER="${2:-}"; shift 2 ;;
     --server=*) SERVER="${1#*=}"; shift ;;
-    --listen) LISTEN="${2:-}"; shift 2 ;;
-    --listen=*) LISTEN="${1#*=}"; shift ;;
     -h | --help)
-      printf 'usage: install-service.sh --enroll-code <CODE> [--server URL] [--listen MULTIADDR]\n'
+      printf 'usage: install-service.sh --enroll-code <CODE> [--server URL]\n'
       exit 0
       ;;
     *) err "unknown argument: $1" ;;
@@ -89,7 +85,6 @@ info "Writing ${UNIT}..."
     "Group=${SVC_USER}" \
     "Environment=GUACD_CONFIG_DIR=${CONFIG_DIR}"
   [ -n "$SERVER" ] && printf 'Environment=GUACD_SERVER=%s\n' "$SERVER"
-  [ -n "$LISTEN" ] && printf 'Environment=GUACD_LISTEN_ADDRS=%s\n' "$LISTEN"
   printf '%s\n' \
     "ExecStart=${BIN} run" \
     'Restart=on-failure' \
