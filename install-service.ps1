@@ -84,5 +84,5 @@ Info 'Installing and starting the service...'
 & $WrapperExe start
 
 Info 'Done. guacd runs as a Windows service (see services.msc).'
-Write-Host "  Logs:   $InstallDir\guacd.out.log" -ForegroundColor Gray
+Write-Host "  Logs:   $InstallDir\guacd-service.out.log" -ForegroundColor Gray
 Write-Host "  Manage: sc stop guacd | sc start guacd  (or services.msc)" -ForegroundColor Gray
