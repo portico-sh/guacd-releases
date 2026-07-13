@@ -48,6 +48,19 @@ if ($env:GUACD_BIN_DIR) {
 }
 New-Item -ItemType Directory -Force -Path $binDir | Out-Null
 
+# --- Stop a running guacd service so we can replace the binary ---------------
+# A running service (or foreground guacd) holds an exclusive lock on guacd.exe,
+# so an in-place upgrade fails with a sharing violation. If the WinSW-managed
+# `guacd` service is running, stop it around the copy and restart it after.
+$svc = Get-Service -Name 'guacd' -ErrorAction SilentlyContinue
+$restartSvc = $false
+if ($svc -and $svc.Status -eq 'Running') {
+    Info 'Stopping running guacd service to replace the binary...'
+    Stop-Service -Name 'guacd' -Force
+    (Get-Service -Name 'guacd').WaitForStatus('Stopped', '00:00:30')
+    $restartSvc = $true
+}
+
 # --- Download + extract ------------------------------------------------------
 $tmp = New-Item -ItemType Directory -Force -Path (Join-Path $env:TEMP ("guacd-" + [guid]::NewGuid()))
 try {
@@ -67,6 +80,10 @@ try {
     Info "Installed $BinName to $binDir\$BinName"
 } finally {
     Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+    if ($restartSvc) {
+        Info 'Restarting guacd service...'
+        Start-Service -Name 'guacd'
+    }
 }
 
 # --- Add to user PATH --------------------------------------------------------
