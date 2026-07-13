@@ -54,3 +54,34 @@ self-hosted deployment, pass `--server https://your-host` or set the
 
 Credentials are stored under `~/.config/guacd` (Linux/macOS) or the equivalent
 per-user config directory on Windows.
+
+## Run as a service (recommended for hosts)
+
+`guacd run` is a foreground process. To run it in the background, on boot, with
+automatic restart, install it as a service. These install the binary
+system-wide, create a system config dir, enroll the daemon, and register the
+service — one command, run as admin/root.
+
+**Linux (systemd):**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/portico-sh/guacd-releases/main/install-service.sh \
+  | sudo sh -s -- --enroll-code <ENROLLMENT_CODE>
+```
+Runs as a dedicated `guacd` user; config in `/var/lib/guacd`; logs via
+`journalctl -u guacd`. Manage with `systemctl {status,stop,start,restart} guacd`.
+
+**Windows (elevated PowerShell):**
+
+```powershell
+$env:GUACD_ENROLL_CODE = '<ENROLLMENT_CODE>'
+irm https://raw.githubusercontent.com/portico-sh/guacd-releases/main/install-service.ps1 | iex
+```
+Config in `%ProgramData%\guacd`; the service is wrapped with
+[WinSW](https://github.com/winsw/winsw) (guacd is a console app). Manage in
+`services.msc` or with `sc {stop,start} guacd`; logs in
+`%ProgramFiles%\guacd\guacd.out.log`.
+
+Both accept `--server <url>` / `$env:GUACD_SERVER` for self-hosted control
+planes and `--listen <multiaddr>` / `$env:GUACD_LISTEN_ADDRS` to pin a fixed
+listen port. macOS (launchd) is planned.
