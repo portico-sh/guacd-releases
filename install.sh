@@ -71,8 +71,10 @@ curl -fsSL "$url" -o "${tmp}/${asset}" \
 info "Extracting..."
 tar -xzf "${tmp}/${asset}" -C "$tmp"
 
-src="${tmp}/${BIN_NAME}-${version}-${platform}/${BIN_NAME}"
-[ -f "$src" ] || err "binary not found in archive"
+# Find the binary wherever the archive put it (root or a versioned subdir), so
+# we don't depend on the archive layout.
+src="$(find "$tmp" -type f -name "$BIN_NAME" -print | head -n1)"
+[ -n "$src" ] && [ -f "$src" ] || err "binary not found in archive"
 
 install -m 0755 "$src" "${bin_dir}/${BIN_NAME}"
 info "Installed ${BIN_NAME} to ${bin_dir}/${BIN_NAME}"

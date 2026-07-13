@@ -58,10 +58,12 @@ try {
     Info 'Extracting...'
     Expand-Archive -Path $zip -DestinationPath $tmp -Force
 
-    $src = Join-Path $tmp "guacd-$version-$platform\$BinName"
-    if (-not (Test-Path $src)) { throw "Binary not found in archive: $src" }
+    # Find the binary wherever the archive put it — at the root or inside a
+    # versioned subdirectory — so we don't depend on the archive layout.
+    $src = Get-ChildItem -Path $tmp -Recurse -Filter $BinName -File | Select-Object -First 1
+    if (-not $src) { throw "Binary '$BinName' not found in archive" }
 
-    Copy-Item $src (Join-Path $binDir $BinName) -Force
+    Copy-Item $src.FullName (Join-Path $binDir $BinName) -Force
     Info "Installed $BinName to $binDir\$BinName"
 } finally {
     Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
