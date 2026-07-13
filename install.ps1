@@ -73,7 +73,12 @@ try {
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 if ($userPath -notlike "*$binDir*") {
     [Environment]::SetEnvironmentVariable('Path', "$userPath;$binDir", 'User')
-    Info "Added $binDir to your user PATH (restart your terminal to pick it up)."
+    Info "Added $binDir to your user PATH."
+}
+# Also update THIS session's PATH so `guacd` works immediately (the persistent
+# user PATH above only reaches new terminals).
+if (($env:Path -split ';') -notcontains $binDir) {
+    $env:Path = "$env:Path;$binDir"
 }
 
 Write-Host @"
