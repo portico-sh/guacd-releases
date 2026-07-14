@@ -1,8 +1,9 @@
 # guacd releases
 
 Prebuilt binaries and cross-platform installers for **guacd**, the Portico
-protocol-runner daemon. It dials out to Portico over WebRTC — no inbound ports
-on your host, no firewall changes.
+protocol-runner daemon. It connects out to Portico and reaches browsers over a
+direct WebRTC data channel — a daemon behind NAT needs no inbound ports (it
+hole-punches out); a public daemon just opens one UDP port.
 
 > This repository contains **binaries and install scripts only** — no source code.
 
@@ -84,4 +85,5 @@ Config in `%ProgramData%\guacd`; the service is wrapped with
 
 Both accept `--server <url>` / `$env:GUACD_SERVER` for self-hosted control
 planes and `--webrtc-port <port>` / `$env:GUACD_WEBRTC_PORT` to change the
-webrtc-direct UDP port (default 4001). macOS (launchd) is planned.
+WebRTC UDP port (default 4001). A public daemon should allow this UDP port
+inbound; a NAT'd daemon needs no inbound rule. macOS (launchd) is planned.
