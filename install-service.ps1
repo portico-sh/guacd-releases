@@ -45,18 +45,36 @@ Info "Installing guacd to $InstallDir..."
 $env:GUACD_BIN_DIR = $InstallDir
 Invoke-Expression (Invoke-RestMethod "$Base/install.ps1") | Out-Null
 
-# --- 2. Download the WinSW service wrapper -----------------------------------
-Info 'Downloading service wrapper (WinSW)...'
-Invoke-WebRequest -Uri $WinSwUrl -OutFile $WrapperExe -UseBasicParsing
+# --- 2. Stop an existing service so we can update the wrapper + config --------
+# On an upgrade, install.ps1 (above) restarts a pre-existing service, which locks
+# guacd-service.exe (and the WinSW wrapper's .xml). Stop it and wait for the
+# wrapper process to exit before touching those files — a running wrapper is what
+# caused "cannot access guacd-service.exe because it is being used by another
+# process".
+$svc = Get-Service -Name 'guacd' -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -ne 'Stopped') {
+    Info 'Stopping guacd service to update the wrapper + config...'
+    Stop-Service -Name 'guacd' -Force
+    (Get-Service -Name 'guacd').WaitForStatus('Stopped', '00:00:30')
+    Wait-Process -Name 'guacd-service' -Timeout 30 -ErrorAction SilentlyContinue
+}
 
-# --- 3. Enroll into the shared config dir ------------------------------------
+# --- 3. Ensure the WinSW wrapper is present (pinned; fetch only if missing) ---
+# The wrapper is a fixed version, so an upgrade reuses the installed one instead
+# of overwriting a (still-locked) running binary.
+if (-not (Test-Path $WrapperExe)) {
+    Info 'Downloading service wrapper (WinSW)...'
+    Invoke-WebRequest -Uri $WinSwUrl -OutFile $WrapperExe -UseBasicParsing
+}
+
+# --- 4. Enroll into the shared config dir ------------------------------------
 Info 'Enrolling daemon...'
 $enrollArgs = @('enroll', $code, '--config-dir', $ConfigDir)
 if ($server) { $enrollArgs += @('--server', $server) }
 & $BinPath @enrollArgs
 if ($LASTEXITCODE -ne 0) { throw 'Enrollment failed (code invalid or expired? generate a fresh one).' }
 
-# --- 4. Write the WinSW config (must share the wrapper's base name) -----------
+# --- 5. Write the WinSW config (must share the wrapper's base name) -----------
 $runArgs = "run --config-dir `"$ConfigDir`""
 if ($server) { $runArgs += " --server `"$server`"" }
 $xml = @"
@@ -76,10 +94,18 @@ $xml = @"
 "@
 Set-Content -Path $WrapperXml -Value $xml -Encoding UTF8
 
-# --- 5. Install + start the service ------------------------------------------
-Info 'Installing and starting the service...'
-& $WrapperExe install
-& $WrapperExe start
+# --- 6. Register (if new) + start the service --------------------------------
+# `WinSW install` errors if the service already exists, so on an upgrade we just
+# restart the already-registered service (its binary + config were refreshed
+# above); a fresh install registers it first.
+if ($svc) {
+    Info 'Restarting updated guacd service...'
+    Start-Service -Name 'guacd'
+} else {
+    Info 'Installing and starting the service...'
+    & $WrapperExe install
+    & $WrapperExe start
+}
 
 Info 'Done. guacd runs as a Windows service (see services.msc).'
 Write-Host "  Logs:   $InstallDir\guacd-service.out.log" -ForegroundColor Gray
